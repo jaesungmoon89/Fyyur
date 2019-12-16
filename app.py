@@ -91,9 +91,7 @@ def create_venue_form():
 
 @app.route('/venues/create', methods=['POST'])
 def create_venue_submission():
-  genreList = request.form["genres"].split(',')
-  
-  venue = Venue(name=request.form["name"], city=request.form["city"], state=request.form["state"], address=request.form["address"], phone=request.form["phone"], genres=genreList, facebook_link=request.form["facebook_link"])
+  venue = Venue(name=request.form["name"], city=request.form["city"], state=request.form["state"], address=request.form["address"], phone=request.form["phone"], genres=[request.form["genres"]], facebook_link=request.form["facebook_link"])
   db.session.add_all([venue])
   try:
    db.session.commit()
@@ -162,8 +160,7 @@ def edit_artist(artist_id):
 
 @app.route('/artists/<int:artist_id>/edit', methods=['POST'])
 def edit_artist_submission(artist_id):
-  genreList = request.form["genres"].split(',')
-  artist = Artist.query.filter(Artist.id == artist_id).update({'name':request.form["name"],'city':request.form["city"],'state':request.form["state"],'phone':request.form["phone"],'genres':genreList,'facebook_link':request.form["facebook_link"]})
+  artist = Artist.query.filter(Artist.id == artist_id).update({'name':request.form["name"],'city':request.form["city"],'state':request.form["state"],'phone':request.form["phone"],'genres':[request.form["genres"]],'facebook_link':request.form["facebook_link"]})
   try:
    db.session.commit()
    flash('Artist ' + request.form['name'] + ' was successfully edited!')
@@ -184,8 +181,7 @@ def edit_venue(venue_id):
 
 @app.route('/venues/<int:venue_id>/edit', methods=['POST'])
 def edit_venue_submission(venue_id):
-  genreList = request.form["genres"].split(',')
-  venue = Venue.query.filter(Venue.id == venue_id).update({'name':request.form["name"],'city':request.form["city"],'state':request.form["state"],'address':request.form["address"],'phone':request.form["phone"],'genres':genreList,'facebook_link':request.form["facebook_link"]})
+  venue = Venue.query.filter(Venue.id == venue_id).update({'name':request.form["name"],'city':request.form["city"],'state':request.form["state"],'address':request.form["address"],'phone':request.form["phone"],'genres':[request.form["genres"]],'facebook_link':request.form["facebook_link"]})
   try:
    db.session.commit()
    flash('Venue ' + request.form['name'] + ' was successfully edited!')
@@ -207,10 +203,8 @@ def create_artist_form():
   return render_template('forms/new_artist.html', form=form)
 
 @app.route('/artists/create', methods=['POST'])
-def create_artist_submission():
-  genreList = request.form["genres"].split(',')
-  
-  artist = Artist(name=request.form["name"], city=request.form["city"], state=request.form["state"], phone=request.form["phone"], genres=genreList, facebook_link=request.form["facebook_link"])
+def create_artist_submission():  
+  artist = Artist(name=request.form["name"], city=request.form["city"], state=request.form["state"], phone=request.form["phone"], genres=[request.form["genres"]], facebook_link=request.form["facebook_link"])
   db.session.add_all([artist])
   try:
    db.session.commit()
@@ -229,18 +223,7 @@ def create_artist_submission():
 
 @app.route('/shows')
 def shows():
-  #data = db.session.query(Show).join(Venue,(Show.c.venue_id == Venue.id)).join(Artist,(Show.c.artist_id == Artist.id))
   
-  #data = Venue.query.join(Show,(Show.c.venue_id == Venue.id)).join(Artist,(Show.c.artist_id == Artist.id))
-  data=[{
-    "venue_id": 1,
-    "venue_name": "The Musical Hop",
-    "artist_id": 4,
-    "artist_name": "Guns N Petals"
-  }]
-  # displays list of shows at /shows
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
   # data=[{
     # "venue_id": 1,
     # "venue_name": "The Musical Hop",
@@ -277,6 +260,9 @@ def shows():
     # "artist_image_link": "https://images.unsplash.com/photo-1558369981-f9ca78462e61?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=crop&w=794&q=80",
     # "start_time": "2035-04-15T20:00:00.000Z"
   # }]
+  
+  data = Show.query.all()
+  
   return render_template('pages/shows.html', shows=data)
   
 @app.route('/shows/create')
@@ -287,15 +273,16 @@ def create_shows():
 
 @app.route('/shows/create', methods=['POST'])
 def create_show_submission():
-  statement = Show.insert().values(artist_id=request.form["artist_id"], venue_id=request.form["venue_id"], start_time=request.form["start_time"])
+  #statement = Show.insert().values(artist_id=request.form["artist_id"], venue_id=request.form["venue_id"], start_time=request.form["start_time"])
+  show = Show(artist_id=request.form["artist_id"], venue_id=request.form["venue_id"], start_time=request.form["start_time"])
+  db.session.add_all([show])
   try:
-   db.session.execute(statement)
    db.session.commit()
    flash('Show was successfully listed!')
   except Exception as e:
    db.session.rollback()
    db.session.flush()
-   flash('An error occurred. Show could not be listed.')
+   flash('An error occurred. Show could not be listed.' + str(e))
   finally:
    db.session.close()
   return render_template('pages/home.html')
